@@ -3,12 +3,11 @@
 
 
 
-void main()
+int main(int argc, char *argv[])
 {
-    char a[]="Hello World";
-    uint32_t    ret;
+    uint32_t    ret=0;
 
-    ret = 0;
-    str2hash1(a, &ret);
+    str2hash1(argv[1], &ret);
     printf("%lu\n",ret);
+    return 0;
 }

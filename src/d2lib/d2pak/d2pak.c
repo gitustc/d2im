@@ -1296,7 +1296,7 @@ void str2hash1( const char *str, uint32_t *seed )
 
 
     while(b){
-        seed1 = glb_encry_table[(offset+b)%1280]^(seed1+seed2);
+        seed1 = glb_encry_table[((offset<<8)+b)%1280]^(seed1+seed2);
         seed2 = seed1+seed2+(seed2<<5)+b+3;
         b = *(str++);
     }
