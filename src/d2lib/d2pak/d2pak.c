@@ -1284,33 +1284,21 @@ static uint32_t glb_encry_table[1280] = {
 };
 
 
-
-DWORD Crc(char *string,DWORD *massive_base,DWORD massive_base_offset)
+void str2hash1( const char *str, uint32_t *seed )
 {
-    char   byte;
-    DWORD  crc=0x7fed7fed;
-    DWORD  s1=0xEEEEEEEE;
+    char b;
+    uint32_t    seed1, seed2, offset;
 
-    byte=*string;
-    while(byte) {
-        if(byte>0x60 && byte<0x7B)
-            byte-=0x20;
-        //massive_base¿?¿?¿?¿?¿?¿?¿?¿?¿?¿?¿?¿?
-        crc=*(massive_base+massive_base_offset+byte)^(crc+s1);
-        s1+=crc+(s1<<5)+byte+3;
-        string++;
-        byte=*string;
+    seed1 = 0X7FED7FED;
+    seed2 = 0XEEEEEEEE;
+    b     = *str;
+    offset= *seed;
+
+
+    while(b){
+        seed1 = glb_encry_table[(offset+b)%1280]^(seed1+seed2);
+        seed2 = seed1+seed2+(seed2<<5)+b+3;
+        b = *(str++);
     }
-    return crc;
+    *seed = seed1;
 }
-
-
-
-
-
-
-
-
-
-
-

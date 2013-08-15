@@ -27,6 +27,8 @@ void str2hash1(const char *, uint32_t *);
 void str2hash2(const char *, uint32_t *);
 void str2hash3(const char *, uint32_t *);
 
+extern d2pak *d2pak_open(const char *);
+extern void   d2pak_free(const char *);
 
 
 
