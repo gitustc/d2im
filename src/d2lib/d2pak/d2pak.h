@@ -4,12 +4,18 @@
 
 typedef struct {
     uint32_t        binfo;
+    uint32_t        capacity;
+
 }d2pak_header;
 
+typedef struct {
+    uint32_t        crc1;
 
 typedef struct {
-    d2pak_header    d2phd;
-
+    d2pak_header    d2phdr;
+    uint32_t       *indices;
+    uint32_t       *crctbl;
+    uint32_t       *finfo;
 }d2pak;
 
 

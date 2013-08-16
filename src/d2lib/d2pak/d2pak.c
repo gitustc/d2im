@@ -1,5 +1,6 @@
 #include <stdint.h>
-
+#include "d2pak.h"
+/* {{{ glb_encry_table */
 static uint32_t glb_encry_table[1280] = {
     0X55C636E2,
     0X02BE0170,
@@ -1282,8 +1283,8 @@ static uint32_t glb_encry_table[1280] = {
     0X4C10790D,
     0X7303286C,
 };
-
-
+/* }}} */
+/* {{{ str2hash1 */
 void str2hash1( const char *str, uint32_t *seed )
 {
     char b;
@@ -1294,7 +1295,6 @@ void str2hash1( const char *str, uint32_t *seed )
     b     = *str;
     offset= *seed;
 
-
     while(b){
         seed1 = glb_encry_table[((offset<<8)+b)%1280]^(seed1+seed2);
         seed2 = seed1+seed2+(seed2<<5)+b+3;
@@ -1302,3 +1302,118 @@ void str2hash1( const char *str, uint32_t *seed )
     }
     *seed = seed1;
 }
+
+void str2hash2( const char *str, uint32_t *seed )
+{
+    str2hash1(str, seed);
+    str2hash1(str, seed+1);
+}
+
+void str2hash3( const char *str, uint32_t *seed )
+{
+    str2hash1(str, seed);
+    str2hash1(str, seed+1);
+    str2hash1(str, seed+2);
+}
+
+/* }}} */
+
+
+d2pak *d2pak_open(const char *str)
+{
+    d2pak  *f;
+    int     crcs;
+
+    f = malloc(sizeof(d2pak));
+    if( !f ){
+        return NULL;
+    }
+
+    f->fp = fopen(str, "r");
+    if( !(f->fp) ){
+        free(f);
+        return NULL;
+    }
+
+    fread(&(f->d2phdr), sizeof(d2phdr), 1, f->fp);
+
+    /* indices table */
+    f->indices = malloc(4*((f->d2phdr).capacity));
+    
+    if(!(f->indices)){
+        fclose(f->fp);
+        free(f);
+        return NULL;
+    }
+
+    f->d2finfo = malloc(sizeof(d2finfo)*((f->d2phdr).capacity));
+    if(!(f->d2finfo)){
+        fclose(f->fp);
+        free(f->indices);
+        free(f);
+        return NULL;
+    }
+
+    switch((f->d2phdr).binfo|D2PAK_BINFO_CRCS){
+        case D2PAK_BINFO_CRC1:
+            f->crc_num = 1;
+            break;
+        case D2PAK_BINFO_CRC1:
+            f->crc_num = 1;
+            break;
+        case D2PAK_BINFO_CRC1:
+            f->crc_num = 1;
+            break;
+        default:
+    }
+
+    fread(f->indices, (f->d2phdr).blk_num, 4, f->fp);
+    fread(f->crctbl, (f->d2phdr).blk_num, f->crc_num, f->fp);
+    fread(f->d2finfo, (f->d2phdr).blk_num, sizeof(d2finfo), f->fp);
+
+
+
+    
+}
+
+int d2pak_seek(d2pak *f, const char *str)
+{
+    uint32_t        seeds[3];
+    
+    switch(f->crc_num){
+        case 1:
+            {
+                   str2hash1(str, seeds);
+                   index = (f->indices)[seeds[1]%((f->d2phdr).capacity)];
+                   if(index != 0){
+                       p = index;
+                       while((f->crctbl)[p] != seeds[1]){
+                           p++;
+                       }
+                       if(p == index){
+                           /* scan all the crc, fail */
+                           return 1;
+                       }else{
+                           /* ok we find it */
+                           fseek(f->fp, (f->start)[p], SEEK_SET);
+                       }
+                   }else{
+                       /* file do not exist */
+                       return 1;
+                   }
+
+
+                   
+
+}
+
+
+
+
+
+
+
+
+
+
+
