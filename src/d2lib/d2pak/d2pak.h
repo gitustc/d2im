@@ -12,7 +12,13 @@ typedef struct {
     uint32_t        crc1;
 
 typedef struct {
+
     d2pak_header    d2phdr;
+
+    uint32_t        seed1;
+    uint32_t        seed2;
+    uint32_t        seed3;
+
     uint32_t       *indices;
     uint32_t       *crctbl;
     uint32_t       *finfo;
