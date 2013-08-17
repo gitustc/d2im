@@ -47,7 +47,7 @@ int main(int argc, char* argv[])
 
 
     if(!strcmp(argv[1],"-u8")){
-        fp = fopen(argv[3], "wb");
+        fp = fopen(argv[3], "ab");
         if(!fp){
             return 2;
         }
@@ -61,34 +61,34 @@ int main(int argc, char* argv[])
 
 
     if(!strcmp(argv[1],"-u16")){
-        fp = fopen(argv[3], "wb");
+        fp = fopen(argv[3], "ab");
         if(!fp){
             return 2;
         }
 
         u16 = (uint16_t)atoi(argv[2]);
         fseek(fp, 0, SEEK_END);
-        fwrite(&u16, 1, 1, fp);
+        fwrite(&u16, 1, 2, fp);
         fclose(fp);
         return 0;
     }
 
 
     if(!strcmp(argv[1],"-u32")){
-        fp = fopen(argv[3], "wb");
+        fp = fopen(argv[3], "ab");
         if(!fp){
             return 2;
         }
 
         u32 = (uint32_t)atoi(argv[2]);
         fseek(fp, 0, SEEK_END);
-        fwrite(&u32, 1, 1, fp);
+        fwrite(&u32, 1, 4, fp);
         fclose(fp);
         return 0;
     }
 
     if(!strcmp(argv[1],"-i8")){
-        fp = fopen(argv[3], "wb");
+        fp = fopen(argv[3], "ab");
         if(!fp){
             return 2;
         }
@@ -102,28 +102,28 @@ int main(int argc, char* argv[])
 
 
     if(!strcmp(argv[1],"-i16")){
-        fp = fopen(argv[3], "wb");
+        fp = fopen(argv[3], "ab");
         if(!fp){
             return 2;
         }
 
         i16 = (int16_t)atoi(argv[2]);
         fseek(fp, 0, SEEK_END);
-        fwrite(&i16, 1, 1, fp);
+        fwrite(&i16, 1, 2, fp);
         fclose(fp);
         return 0;
     }
 
 
     if(!strcmp(argv[1],"-i32")){
-        fp = fopen(argv[3], "wb");
+        fp = fopen(argv[3], "ab");
         if(!fp){
             return 2;
         }
 
         u32 = (int32_t)atoi(argv[2]);
         fseek(fp, 0, SEEK_END);
-        fwrite(&i32, 1, 1, fp);
+        fwrite(&i32, 1, 4, fp);
         fclose(fp);
         return 0;
     }
