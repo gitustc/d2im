@@ -1,5 +1,8 @@
 #include <stdint.h>
+#include <stdio.h>
+#if 0
 #include "d2pak.h"
+#endif
 /* {{{ glb_encry_table */
 static uint32_t glb_encry_table[1280] = {
     0X55C636E2,
@@ -1319,6 +1322,21 @@ void str2hash3( const char *str, uint32_t *seed )
 /* }}} */
 
 
+int main(int argc, char *argv[])
+{
+    uint32_t    seed;
+
+    seed = (uint32_t)atoi(argv[1]);
+    str2hash1(argv[2], &seed);
+    printf("0X%08X\n",seed);
+    return 0;
+}
+
+
+
+
+#if 0
+
 d2pak *d2pak_open(const char *str)
 {
     d2pak  *f;
@@ -1479,3 +1497,5 @@ int16_t d2pak_find(d2pak *f, const char *str){
 
     }
 }
+#endif
+

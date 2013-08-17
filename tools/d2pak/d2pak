@@ -1,0 +1,110 @@
+#!/bin/bash
+
+check_file_name(){
+    error_tok_num=`cat ./list | grep [^a-zA-Z0-9_\/\.\-] | awk "END{print NR}"`
+    if [[ $error_tok_num > 0 ]]
+    then
+        echo error: only a~z A-Z 0-9 _ / . - are allowed in d2pak file name
+        exit 1
+    fi
+}
+generate_list(){
+    rm d2pak_workspace -rf
+    mkdir d2pak_workspace
+    cd d2pak_workspace
+    d2pak_workspace_path=`pwd`
+    cd ..
+    cd $1
+    find . -type f > $d2pak_workspace_path/list
+    cd $d2pak_workspace_path
+    check_file_name
+    sed -i "s/^.//" ./list
+}
+
+calculate_hash_table(){
+
+    cp ./list ./list_backup
+    for i1 in `seq 1 1280`
+    do
+        cp list_backup list_o
+        awk '{printf("../str2hash1 '$i1'  %s\n",$1)}' list_o > list
+        chmod +x ./list
+        ./list > ./hash
+        old_nr=`awk "END{print NR}" ./hash`
+        new_nr=`sort -u ./hash | awk "END{print NR}" -`
+        if [[ $old_nr == $new_nr ]]
+        then
+            echo $i1 > ./seed
+            return
+        fi
+    done
+
+    for i1 in `seq 1 1280`
+    do
+        for i2 in `seq 1 1280`
+        do
+            cp list_backup list_o
+            awk '{printf("../str2hash2 '$i1 $i2'  %s\n",$1)}' list_o > list
+            chmod +x ./list
+            ./list > ./hash
+            old_nr=`awk "END{print NR}" ./hash`
+            new_nr=`sort -u ./hash | awk "END{print NR}" -`
+            if [[ $old_nr == $new_nr ]]
+            then
+                echo $i1 $i2> ./seed
+                return
+            fi
+        done
+    done
+
+    for i1 in `seq 1 1280`
+    do
+        for i2 in `seq 1 1280`
+        do
+            for i3 in `seq 1 1280`
+            do
+                cp list_backup list_o
+                awk '{printf("../str2hash3 '$i1 $i2 $i3'  %s\n",$1)}' list_o > list
+                chmod +x ./list
+                ./list > ./hash
+                old_nr=`awk "END{print NR}" ./hash`
+                new_nr=`sort -u ./hash | awk "END{print NR}" -`
+                if [[ $old_nr == $new_nr ]]
+                then
+                    echo $i1 $i2 $i3> ./seed
+                    return
+                fi
+            done
+        done
+    done
+
+
+}
+
+
+d2pak_create(){
+    generate_list  $1
+    calculate_hash_table
+
+}
+
+
+if (($# != 2))
+then
+    echo d2pak -c root_path
+    echo d2pak -u name.d2p
+    exit 1
+fi
+
+if [ $1 = "-c" ]
+then
+    d2pak_create $2
+    exit 0
+fi
+
+
+if [ $1 = "-u" ]
+then
+    d2pak_unpak $2
+    exit 0
+fi
