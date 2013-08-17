@@ -1370,11 +1370,10 @@ d2pak *d2pak_open(const char *str)
     fread(f->indices, (f->d2phdr).blk_num, 4, f->fp);
     fread(f->crctbl, (f->d2phdr).blk_num, f->crc_num, f->fp);
     fread(f->d2finfo, (f->d2phdr).blk_num, sizeof(d2finfo), f->fp);
-
-
-
-    
 }
+
+
+
 
 int d2pak_seek(d2pak *f, const char *str)
 {
@@ -1402,9 +1401,6 @@ int d2pak_seek(d2pak *f, const char *str)
                        return 1;
                    }
 
-
-                   
-
 }
 
 
@@ -1412,8 +1408,74 @@ int d2pak_seek(d2pak *f, const char *str)
 
 
 
+/*
+ * f    pointer to the d2pak file
+ * str  file name in d2pak
+ * ret  >=0 if succeed, otherwise <0
+ */
+int16_t d2pak_find(d2pak *f, const char *str){
+
+    uint32_t        seeds[3];
+    
+    switch(f->crc_num){
+        case 1:
+            {
+                   str2hash1(str, seeds);
+                   index = (f->indices)[seeds[0]%((f->d2phdr).capacity)];
+                   if(index != 0){
+                       p = index;
+                       while((f->crctbl)[p] != seeds[0]){
+                           p++;
+                       }
+                       if(p == index){
+                           /* scan all the crc, fail */
+                           return 1;
+                       }else{
+                           /* ok we find it */
+                           fseek(f->fp, (f->start)[p], SEEK_SET);
+                       }
+                   }else{
+                       /* file do not exist */
+                       return 1;
+                   }
+            }
+        case 2:
+            {
+                str2hash2(str, seeds);
+                   index = (f->indices)[seeds[1]%((f->d2phdr).capacity)];
+                   if( index <= (f->d2phdr).blk_num ){
+                       p = index;
+                       while((f->crctbl)[p] != seed[0] || (f->crctbl)[p+1] != seed[1]){
+                           p = (p+1)%((f->d2phdr).blk_num);
+                           if(p == index){
+                               /* scan all the crc, fail */
+                               return -1;
+                           }
+                       }
+                       return p;
+                   }
+            }
+        case 3:
+            {
+                str2hash(str, seeds);
+                index = (f->indices)[seeds[0]%((f->d2phdr).capacity)];
+                if( index >= 0 ){
+                    p = index;
+                    while(!((f->crctbl)[p  ] == seed[0] &&
+                                (f->crctbl)[p+1] == seed[1] &&
+                                (f->crctbl)[p+2] == seed[2])){
+                        p = (p+1)%((f->d2phdr).blk_num);
+                        if(p == index){
+                            return -1;
+                        }
+                    }
+                    return p;
 
 
+                }else{
+                    return -1;
+                }
+            }
 
-
-
+    }
+}

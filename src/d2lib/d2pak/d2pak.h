@@ -25,12 +25,21 @@ typedef struct {
 }d2pak;
 
 
+#if 0
 typedef struct {
     uint32_t        start;
     uint32_t        length;
     uint32_t        binfo;
 }d2finfo;
+#endif
 
+#define d2pak_fstart(f, index)      (const)(*(((f)->finfo)+(index)*3))
+#define d2pak_flen(f, index)        (const)(*(((f)->finfo)+(index)*3+1))
+#define d2pak_fbinfo(f, index)      (const)(*(((f)->finfo)+(index)*3+2))
+
+
+#define d2pak_seek(f, index)        (fseek(f->fp, d2pak_fstart(f, index), SEEK_SET))
+#define d2pak_read(f, buf, n)       (fread(buf, buf, n, 1, f->fp))
 
 
 
