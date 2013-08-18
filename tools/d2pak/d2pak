@@ -24,31 +24,87 @@ generate_list(){
 calculate_hash_table(){
 
     file_num=`awk 'END{print NR}' ./list`
-    cp ./list ./list_backup
+    file_capacity=`echo $file_num*3+7 | bc`
+    echo file number = $file_num
+    echo file capacity = $file_capacity
+
+    cp  list list_backup
     for (( i=0;i<5;i++ ))
     do
-        for (( j=i+1;j<5;j++ ))
+        cp list_backup list_o
+        mkdir ${i}
+        awk '{printf("../../str2hash '"$i"'  %s\n",$1)}' list_o > ./${i}/list
+        cd ${i}
+        chmod +x ./list
+        ./list > ./hash
+        rm ./list
+        #new_file_num=`cat hash | sort -u | awk 'END{print NR}' -`
+        cd ..
+    done
+
+    mv ./list_backup ./list
+    rm ./list_o
+
+    for (( i=0;i<5;i++ ))
+    do
+        mkdir modc_${i}
+        cd modc_${i}
+        awk '{printf("%d%%'$file_capacity'\n",$1)}' ../${i}/hash| bc > hash_tmp
+        awk '{printf("0X%08X\n",$1)}' hash_tmp > hash
+        rm hash_tmp
+        cd ..
+    done
+
+
+    for (( i=0;i<5;i++ ))
+    do
+        new_file_num=`cat ./modc_${i}/hash | sort -u | awk 'END{print NR}' -`
+        if (( $new_file_num == $file_num ))
+        then
+            cp ./modc_${i} dir_${i} -r
+        fi
+    done
+
+    for (( i=0;i<5;i++ ))
+    do
+        for (( j=0;j<5;j++ ))
         do
-            for (( k=j+1;k<5;k++ ))
-            do
-                mkdir dir_${i}_${j}_${k}
-                cp list_backup list_o
-                awk '{printf("../../str2hash '"$i $j $k"'  %s\n",$1)}' list_o > ./dir_${i}_${j}_${k}/list
-                cd dir_${i}_${j}_${k}
-                chmod +x ./list
-                ./list > ./hash
-                rm ./list
-                new_file_num=`cat hash | sort -u | awk 'END{print NR}' -`
+            if (( i!=j ))
+            then
+                mkdir dir_${i}_${j}
+                cd dir_${i}_${j}
+                paste -d "  " ../modc_${i}/hash ../${j}/hash > hash
                 cd ..
-                if [[ $new_file_num != $file_num ]]
+                new_file_num=`cat ./dir_${i}_${j}/hash | sort -u | awk 'END{print NR}' -`
+                if (( new_file_num != file_num ))
                 then
-                    rm -rf dir_${i}_${j}_${k}
+                    rm dir_${i}_${j} -rf
+                fi
+            fi
+        done
+    done
+
+    for (( i=0;i<5;i++ ))
+    do
+        for (( j=0;j<5;j++ ))
+        do
+            for (( k=0;k<5;k++ ))
+            do
+                if (( i!=j && i!=k && j<k ))
+                then
+                    mkdir dir_${i}_${j}_${k}
+                    cd dir_${i}_${j}_${k}
+                    paste -d "  " ../modc_${i}/hash ../${j}/hash ../${k}/hash > hash
+                    cd ..
+                    new_file_num=`cat ./dir_${i}_${j}_${k}/hash | sort -u | awk 'END{print NR}' -`
+                    if (( new_file_num != file_num ))
+                    then
+                        rm dir_${i}_${j}_${k} -rf
+                    fi
                 fi
             done
         done
     done
-    mv ./list_backup ./list
-    rm ./list_o
 }
 
 
