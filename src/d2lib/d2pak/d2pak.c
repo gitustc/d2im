@@ -1324,11 +1324,13 @@ void str2hash3( const char *str, uint32_t *seed )
 
 int main(int argc, char *argv[])
 {
-    uint32_t    seed;
+    uint32_t    seed[3];
 
-    seed = (uint32_t)atoi(argv[1]);
-    str2hash1(argv[2], &seed);
-    printf("0X%08X\n",seed);
+    seed[0] = (uint32_t)atoi(argv[1]);
+    seed[1] = (uint32_t)atoi(argv[2]);
+    seed[2] = (uint32_t)atoi(argv[3]);
+    str2hash3(argv[4], seed);
+    printf("0X%08X 0X%08X 0X%08X\n",seed[0], seed[1], seed[2]);
     return 0;
 }
 

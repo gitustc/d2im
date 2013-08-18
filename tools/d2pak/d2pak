@@ -23,66 +23,36 @@ generate_list(){
 
 calculate_hash_table(){
 
+    file_num=`awk 'END{print NR}' ./list`
     cp ./list ./list_backup
-    for i1 in `seq 1 1280`
+    for (( i=0;i<5;i++ ))
     do
-        cp list_backup list_o
-        awk '{printf("../str2hash1 '$i1'  %s\n",$1)}' list_o > list
-        chmod +x ./list
-        ./list > ./hash
-        old_nr=`awk "END{print NR}" ./hash`
-        new_nr=`sort -u ./hash | awk "END{print NR}" -`
-        if [[ $old_nr == $new_nr ]]
-        then
-            echo $i1 > ./seed
-            return
-        fi
-    done
-
-    for i1 in `seq 1 1280`
-    do
-        for i2 in `seq 1 1280`
+        for (( j=i+1;j<5;j++ ))
         do
-            cp list_backup list_o
-            awk '{printf("../str2hash2 '$i1 $i2'  %s\n",$1)}' list_o > list
-            chmod +x ./list
-            ./list > ./hash
-            old_nr=`awk "END{print NR}" ./hash`
-            new_nr=`sort -u ./hash | awk "END{print NR}" -`
-            if [[ $old_nr == $new_nr ]]
-            then
-                echo $i1 $i2> ./seed
-                return
-            fi
-        done
-    done
-
-    for i1 in `seq 1 1280`
-    do
-        for i2 in `seq 1 1280`
-        do
-            for i3 in `seq 1 1280`
+            for (( k=j+1;k<5;k++ ))
             do
+                mkdir dir_${i}_${j}_${k}
                 cp list_backup list_o
-                awk '{printf("../str2hash3 '$i1 $i2 $i3'  %s\n",$1)}' list_o > list
+                awk '{printf("../../str2hash '"$i $j $k"'  %s\n",$1)}' list_o > ./dir_${i}_${j}_${k}/list
+                cd dir_${i}_${j}_${k}
                 chmod +x ./list
                 ./list > ./hash
-                old_nr=`awk "END{print NR}" ./hash`
-                new_nr=`sort -u ./hash | awk "END{print NR}" -`
-                if [[ $old_nr == $new_nr ]]
+                rm ./list
+                new_file_num=`cat hash | sort -u | awk 'END{print NR}' -`
+                cd ..
+                if [[ $new_file_num != $file_num ]]
                 then
-                    echo $i1 $i2 $i3> ./seed
-                    return
+                    rm -rf dir_${i}_${j}_${k}
                 fi
             done
         done
     done
-
-
+    mv ./list_backup ./list
+    rm ./list_o
 }
 
 
-d2pak_create(){
+d2pak_create_package(){
     generate_list  $1
     calculate_hash_table
 
@@ -98,13 +68,13 @@ fi
 
 if [ $1 = "-c" ]
 then
-    d2pak_create $2
+    d2pak_create_package $2
     exit 0
 fi
 
 
 if [ $1 = "-u" ]
 then
-    d2pak_unpak $2
+    d2pak_extract_package $2
     exit 0
 fi
