@@ -1,7 +1,7 @@
 #!/bin/bash
 
 check_file_name(){
-    error_tok_num=`cat ./list | grep [^a-zA-Z0-9_\/\.\-] | awk "END{print NR}"`
+    error_tok_num=`cat ./list | grep [^a-zA-Z0-9_\/\.\-] | awk --posix "END{print NR}"`
     if [[ $error_tok_num > 0 ]]
     then
         echo error: only a~z A-Z 0-9 _ / . - are allowed in d2pak file name
@@ -23,7 +23,7 @@ generate_list(){
 
 calculate_hash_table(){
 
-    file_num=`awk 'END{print NR}' ./list`
+    file_num=`awk --posix 'END{print NR}' ./list`
     file_capacity=`echo $file_num*3+7 | bc`
     echo file number = $file_num
     echo file capacity = $file_capacity
@@ -33,12 +33,12 @@ calculate_hash_table(){
     do
         cp list_backup list_o
         mkdir ${i}
-        awk '{printf("../../str2hash '"$i"'  %s\n",$1)}' list_o > ./${i}/list
+        awk --posix '{printf("../../str2hash '"$i"'  %s\n",$1)}' list_o > ./${i}/list
         cd ${i}
         chmod +x ./list
         ./list > ./hash
         rm ./list
-        #new_file_num=`cat hash | sort -u | awk 'END{print NR}' -`
+        #new_file_num=`cat hash | sort -u | awk --posix 'END{print NR}' -`
         cd ..
     done
 
@@ -49,8 +49,8 @@ calculate_hash_table(){
     do
         mkdir modc_${i}
         cd modc_${i}
-        awk '{printf("%d%%'$file_capacity'\n",$1)}' ../${i}/hash| bc > hash_tmp
-        awk '{printf("0X%08X\n",$1)}' hash_tmp > hash
+        awk --posix '{printf("%d%%'$file_capacity'\n",$1)}' ../${i}/hash| bc > hash_tmp
+        awk --posix '{printf("0X%08X\n",$1)}' hash_tmp > hash
         rm hash_tmp
         cd ..
     done
@@ -58,7 +58,7 @@ calculate_hash_table(){
 
     for (( i=0;i<5;i++ ))
     do
-        new_file_num=`cat ./modc_${i}/hash | sort -u | awk 'END{print NR}' -`
+        new_file_num=`cat ./modc_${i}/hash | sort -u | awk --posix 'END{print NR}' -`
         if (( $new_file_num == $file_num ))
         then
             cp ./modc_${i} dir_${i} -r
@@ -75,7 +75,7 @@ calculate_hash_table(){
                 cd dir_${i}_${j}
                 paste -d "  " ../modc_${i}/hash ../${j}/hash > hash
                 cd ..
-                new_file_num=`cat ./dir_${i}_${j}/hash | sort -u | awk 'END{print NR}' -`
+                new_file_num=`cat ./dir_${i}_${j}/hash | sort -u | awk --posix 'END{print NR}' -`
                 if (( new_file_num != file_num ))
                 then
                     rm dir_${i}_${j} -rf
@@ -96,7 +96,7 @@ calculate_hash_table(){
                     cd dir_${i}_${j}_${k}
                     paste -d "  " ../modc_${i}/hash ../${j}/hash ../${k}/hash > hash
                     cd ..
-                    new_file_num=`cat ./dir_${i}_${j}_${k}/hash | sort -u | awk 'END{print NR}' -`
+                    new_file_num=`cat ./dir_${i}_${j}_${k}/hash | sort -u | awk --posix 'END{print NR}' -`
                     if (( new_file_num != file_num ))
                     then
                         rm dir_${i}_${j}_${k} -rf
@@ -108,9 +108,53 @@ calculate_hash_table(){
 }
 
 
+select_hash_seed(){
+    for (( i=0;i<5;i++ ))
+    do
+        if [ -d dir_${i} ]
+        then
+            hash_seed_num=1
+            hash_seed_val=$i
+            return
+        fi
+    done
+    
+}
+
+generate_file(){
+
+    file_d2pk_name=tmp.d2pk
+
+    # identifier
+    printf "D2PK" >> $file_d2pk_name                
+    #info
+    ../tad -u32 0 $file_d2pk_name
+    # capacity
+    ../tad -u32 $file_capacity $file_d2pk_name
+    # file number
+    ../tad -u32 $file_num $file_d2pk_name
+    # seed
+    if (( $hash_seed_num == 1 ))
+    then
+        ../tad -u32 1 $file_d2pk_name
+        ../tad -u32 $hash_seed_val $file_d2pk_name
+    elif (( $hash_seed_num == 2 ))
+    then
+        ../tad -u32 2 $file_d2pk_name
+        ../tad -u32 $hash_seed_val_1 $file_d2pk_name
+    fi
+
+
+
+}
+
+
+
 d2pak_create_package(){
     generate_list  $1
     calculate_hash_table
+    select_hash_seed
+    generate_file
 
 }
 
