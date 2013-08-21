@@ -21,6 +21,9 @@ generate_list(){
     sed -i "s/^.//" ./list
 }
 
+
+# calculate all valid hash table
+# in the form of dir_x_x_x
 calculate_hash_table(){
 
     file_num=`awk --posix 'END{print NR}' ./list`
@@ -108,6 +111,7 @@ calculate_hash_table(){
 }
 
 
+# choose the best one to create the file header
 select_hash_seed(){
     for (( i=0;i<5;i++ ))
     do
@@ -121,6 +125,45 @@ select_hash_seed(){
     
 }
 
+
+generate_file_binfo_and_tmp_file(){
+
+    #some const
+
+    HASH_SEED_1=0x00
+    HASH_SEED_2=0x01
+    HASH_SEED_3=0x02
+
+
+    #some control parameters
+    KEEP_FILENAME=0x00
+
+
+    file_binfo=0x00
+
+
+
+    # seeds number and seeds file
+    if (( $hash_seed_num == 1 ))
+    then
+        file_binfo=$(($file_binfo|$HASH_SEED_1))
+        ../tad -u32 $hash_seed_val_1 ./hash_seeds
+    elif (( $hash_seed_num == 2 ))
+    then
+        file_binfo=$(($file_binfo|$HASH_SEED_2))
+        ../tad -u32 $hash_seed_val_1 ./hash_seeds
+        ../tad -u32 $hash_seed_val_2 ./hash_seeds
+    elif (( $hash_seed_num == 3 ))
+    then
+        file_binfo=$(($file_binfo|$HASH_SEED_3))
+        ../tad -u32 $hash_seed_val_1 ./hash_seeds
+        ../tad -u32 $hash_seed_val_2 ./hash_seeds
+        ../tad -u32 $hash_seed_val_3 ./hash_seeds
+    fi
+
+    # hash table
+}
+
 generate_file(){
 
     file_d2pk_name=tmp.d2pk
@@ -128,21 +171,13 @@ generate_file(){
     # identifier
     printf "D2PK" >> $file_d2pk_name                
     #info
-    ../tad -u32 0 $file_d2pk_name
+    ../tad -u32 $file_binfo $file_d2pk_name
     # capacity
     ../tad -u32 $file_capacity $file_d2pk_name
     # file number
     ../tad -u32 $file_num $file_d2pk_name
-    # seed
-    if (( $hash_seed_num == 1 ))
-    then
-        ../tad -u32 1 $file_d2pk_name
-        ../tad -u32 $hash_seed_val $file_d2pk_name
-    elif (( $hash_seed_num == 2 ))
-    then
-        ../tad -u32 2 $file_d2pk_name
-        ../tad -u32 $hash_seed_val_1 $file_d2pk_name
-    fi
+    # seeds
+    cat ./hash_seeds > $file_d2pk_name
 
 
 
